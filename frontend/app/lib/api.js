@@ -98,7 +98,8 @@ export async function getEvaluaciones(supabase, { limit = 50, offset = 0 } = {})
 export async function getDashboardStats(supabase) {
     const { data, error } = await supabase
         .from('evaluaciones')
-        .select('prediccion, prediccion_codigo, confianza, created_at');
+        .select('id, prediccion, prediccion_codigo, probabilidades, factores, confianza, datos_paciente, created_at')
+        .order('created_at', { ascending: false });
 
     if (error) throw error;
 
@@ -107,5 +108,10 @@ export async function getDashboardStats(supabase) {
     const moderada = data.filter((e) => e.prediccion_codigo === 1).length;
     const severa = data.filter((e) => e.prediccion_codigo === 2).length;
 
-    return { total, leve, moderada, severa, evaluaciones: data };
+    // Confianza promedio
+    const avgConfianza = total > 0
+        ? (data.reduce((s, e) => s + (e.confianza || 0), 0) / total).toFixed(1)
+        : 0;
+
+    return { total, leve, moderada, severa, avgConfianza, evaluaciones: data };
 }

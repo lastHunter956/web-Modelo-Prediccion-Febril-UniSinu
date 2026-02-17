@@ -1,26 +1,51 @@
-version: '3.8'
+version: "3.8"
+
+# ────────────────────────────────────────────────────
+# Docker Compose — Predicción Febril Pediátrica
+# Uso local:   docker compose up --build
+# Dockploy:    importar este archivo directamente
+# Railway:     NO usa compose, ver DEPLOY.md
+# ────────────────────────────────────────────────────
 
 services:
   backend:
     build: ./backend
     ports:
-      - "8000:8000"
+      - "${BACKEND_PORT:-8000}:${BACKEND_PORT:-8000}"
     environment:
+      - PORT=${BACKEND_PORT:-8000}
       - SUPABASE_URL=${SUPABASE_URL}
       - SUPABASE_JWT_SECRET=${SUPABASE_JWT_SECRET}
-      - ALLOWED_ORIGINS=http://localhost:3000
-    volumes:
-      - ./backend/artifacts:/app/artifacts:ro
+      - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-http://localhost:3000}
+      - PIPELINE_PATH=./artifacts/pipeline_completo_v2c.pkl
+      - METADATA_PATH=./artifacts/metadata_v2c.json
+      - FEATURES_PATH=./artifacts/feature_names_v2c.json
     restart: unless-stopped
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "curl",
+          "-f",
+          "http://localhost:${BACKEND_PORT:-8000}/api/health",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   frontend:
-    build: ./frontend
+    build:
+      context: ./frontend
+      args:
+        - NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL}
+        - NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+        - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://backend:8000}
     ports:
-      - "3000:3000"
+      - "${FRONTEND_PORT:-3000}:${FRONTEND_PORT:-3000}"
     environment:
-      - NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL}
-      - NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY}
-      - NEXT_PUBLIC_API_URL=http://backend:8000
+      - PORT=${FRONTEND_PORT:-3000}
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
     restart: unless-stopped

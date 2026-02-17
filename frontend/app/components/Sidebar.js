@@ -35,9 +35,15 @@ export default function Sidebar({ isOpen, onClose }) {
       {/* ── Desktop Sidebar ── */}
       <aside className={`sidebar ${isOpen ? 'open' : ''}`}>
         <div className="sidebar-header">
-          <div className="sidebar-logo">PF</div>
+          <div className="sidebar-logo">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M14 4v10.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0z" />
+              <line x1="12" y1="14" x2="12" y2="12" />
+              <line x1="12" y1="10" x2="12" y2="8" />
+            </svg>
+          </div>
           <div className="sidebar-brand">
-            <h2>Predicción Febril</h2>
+            <h2>Predicción <span className="sidebar-brand-accent">Febril</span></h2>
             <span>UniSinú · Cartagena</span>
           </div>
         </div>

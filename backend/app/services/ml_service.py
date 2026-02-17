@@ -45,43 +45,59 @@ class MLService:
         if cls._instance is None:
             cls._instance = super().__new__(cls)
             cls._instance._initialized = False
+            cls._instance.metadata = {}
+            cls._instance.feature_names = {}
         return cls._instance
 
     def load(self, pipeline_path: str, metadata_path: str, features_path: str):
         """Carga pipeline (joblib) y metadata al iniciar la app."""
-        logger.info("Cargando pipeline desde %s...", pipeline_path)
+        try:
+            logger.info("Cargando pipeline desde %s...", pipeline_path)
 
-        # Cargar artefactos con joblib (no pickle!)
-        pipeline_dict = joblib.load(pipeline_path)
+            # Verificar que los archivos existen
+            for fpath, desc in [
+                (pipeline_path, "Pipeline"),
+                (metadata_path, "Metadata"),
+                (features_path, "Features"),
+            ]:
+                if not Path(fpath).exists():
+                    raise FileNotFoundError(f"{desc} no encontrado: {fpath}")
 
-        # Extraer componentes del pipeline
-        self.modelo = pipeline_dict["modelo"]          # CalibratedClassifierCV
-        self.scaler = pipeline_dict["scaler"]          # StandardScaler
-        self.ohe = pipeline_dict["ohe"]                # OneHotEncoder
-        self.imputer_num = pipeline_dict["imputer_num"]  # SimpleImputer
-        self.imputer_cat = pipeline_dict["imputer_cat"]  # SimpleImputer
-        self.cols_num = pipeline_dict["cols_num"]        # 6 columnas numéricas
-        self.cols_cat = pipeline_dict["cols_cat"]        # 9 columnas categóricas
-        self.cols_escalar = pipeline_dict["cols_escalar"]
-        self.feature_names_post_ohe = pipeline_dict["feature_names_post_ohe"]
-        self.features_originales = pipeline_dict["features_originales"]
-        self.categorias_raras = pipeline_dict["categorias_raras"]
-        self.class_names = pipeline_dict["class_names"]
+            # Cargar artefactos con joblib
+            pipeline_dict = joblib.load(pipeline_path)
 
-        # Cargar metadata
-        with open(metadata_path, "r", encoding="utf-8") as f:
-            self.metadata = json.load(f)
+            # Extraer componentes del pipeline
+            self.modelo = pipeline_dict["modelo"]
+            self.scaler = pipeline_dict["scaler"]
+            self.ohe = pipeline_dict["ohe"]
+            self.imputer_num = pipeline_dict["imputer_num"]
+            self.imputer_cat = pipeline_dict["imputer_cat"]
+            self.cols_num = pipeline_dict["cols_num"]
+            self.cols_cat = pipeline_dict["cols_cat"]
+            self.cols_escalar = pipeline_dict["cols_escalar"]
+            self.feature_names_post_ohe = pipeline_dict["feature_names_post_ohe"]
+            self.features_originales = pipeline_dict["features_originales"]
+            self.categorias_raras = pipeline_dict["categorias_raras"]
+            self.class_names = pipeline_dict["class_names"]
 
-        with open(features_path, "r", encoding="utf-8") as f:
-            self.feature_names = json.load(f)
+            # Cargar metadata
+            with open(metadata_path, "r", encoding="utf-8") as f:
+                self.metadata = json.load(f)
 
-        self._initialized = True
-        logger.info(
-            "Pipeline cargado — modelo: %s, features originales: %d, post-OHE: %d",
-            type(self.modelo).__name__,
-            len(self.features_originales),
-            len(self.feature_names_post_ohe),
-        )
+            with open(features_path, "r", encoding="utf-8") as f:
+                self.feature_names = json.load(f)
+
+            self._initialized = True
+            logger.info(
+                "Pipeline cargado — modelo: %s, features originales: %d, post-OHE: %d",
+                type(self.modelo).__name__,
+                len(self.features_originales),
+                len(self.feature_names_post_ohe),
+            )
+        except Exception as e:
+            self._initialized = False
+            logger.error("Error cargando pipeline: %s", e, exc_info=True)
+            raise
 
     @property
     def is_loaded(self) -> bool:

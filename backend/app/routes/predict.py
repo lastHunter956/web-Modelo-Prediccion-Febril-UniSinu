@@ -1,6 +1,6 @@
 """Ruta de predicción — /api/predict."""
 import logging
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from ..models.schemas import PatientInput, PredictionOutput
 from ..services.ml_service import ml_service
 from ..services.auth import verify_jwt
@@ -21,6 +21,12 @@ async def predict(
     internamente. El resultado incluye la clase predicha, probabilidades
     de las 3 clases, factores contribuyentes y un disclaimer legal.
     """
+    if not ml_service.is_loaded:
+        raise HTTPException(
+            status_code=503,
+            detail="El modelo no está cargado. Reinicie el servidor.",
+        )
+
     data = patient.model_dump()
 
     logger.info(
@@ -30,7 +36,14 @@ async def predict(
         data.get("glasgow"),
     )
 
-    result = ml_service.predict(data)
+    try:
+        result = ml_service.predict(data)
+    except Exception as e:
+        logger.error("Error ejecutando predicción: %s", e, exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail="Error interno al ejecutar la predicción. Revise los datos ingresados.",
+        )
 
     logger.info(
         "Predicción completada — resultado: %s (confianza: %s%%)",

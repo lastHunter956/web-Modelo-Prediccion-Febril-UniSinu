@@ -1,0 +1,11 @@
+# Railway configuration — Backend (FastAPI)
+# Docs: https://docs.railway.app/reference/config-as-code
+
+[build]
+dockerfilePath = "Dockerfile"
+
+[deploy]
+healthcheckPath = "/api/health"
+healthcheckTimeout = 30
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 5

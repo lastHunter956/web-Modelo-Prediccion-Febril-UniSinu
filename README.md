@@ -6,13 +6,13 @@ Sistema web para predecir la severidad de cuadros febriles en pacientes pediátr
 
 ## 📋 Stack
 
-| Componente | Tecnología |
-|---|---|
-| **Frontend** | Next.js 14 (App Router) |
-| **Backend** | FastAPI (Python 3.11) |
+| Componente    | Tecnología                                 |
+| ------------- | ------------------------------------------ |
+| **Frontend**  | Next.js 14 (App Router)                    |
+| **Backend**   | FastAPI (Python 3.11)                      |
 | **Modelo ML** | Extra Trees Calibrado (scikit-learn 1.6.1) |
-| **Auth & DB** | Supabase (Auth + Postgres) |
-| **Estilos** | Vanilla CSS (Dark/Light mode) |
+| **Auth & DB** | Supabase (Auth + Postgres)                 |
+| **Estilos**   | Vanilla CSS (Dark/Light mode)              |
 
 ## ⚡ Setup Rápido
 
@@ -32,12 +32,14 @@ pip install -r requirements.txt
 ```
 
 Edita `backend/.env` con tus credenciales de Supabase:
+
 ```
 SUPABASE_URL=https://xxxxx.supabase.co
 SUPABASE_JWT_SECRET=tu-jwt-secret
 ```
 
 Inicia el servidor:
+
 ```bash
 uvicorn app.main:app --reload --port 8000
 ```
@@ -50,6 +52,7 @@ npm install
 ```
 
 Edita `frontend/.env.local`:
+
 ```
 NEXT_PUBLIC_SUPABASE_URL=https://xxxxx.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOi...
@@ -57,15 +60,25 @@ NEXT_PUBLIC_API_URL=http://localhost:8000
 ```
 
 Inicia el dev server:
+
 ```bash
 npm run dev
 ```
 
 ### 4. Docker (Alternativa)
 
+Copia el archivo `.env` en la raíz del proyecto con tus credenciales:
+
 ```bash
+cp .env.example .env  # Editar con tus valores
 docker-compose up --build
 ```
+
+Accede a:
+
+- **Frontend**: http://localhost:3000
+- **Backend API**: http://localhost:8000/api/health
+- **Docs API**: http://localhost:8000/docs
 
 ## 🧠 Modelo ML
 

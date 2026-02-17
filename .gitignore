@@ -43,6 +43,7 @@ supabase/.temp/
 *.swo
 
 # Project Specific
+.env
 frontend/.env.local
 frontend/.env.production
 backend/.env
