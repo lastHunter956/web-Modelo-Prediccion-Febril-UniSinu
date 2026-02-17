@@ -22,13 +22,7 @@ services:
       - FEATURES_PATH=./artifacts/feature_names_v2c.json
     restart: unless-stopped
     healthcheck:
-      test:
-        [
-          "CMD",
-          "curl",
-          "-f",
-          "http://localhost:8000/api/health",
-        ]
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -46,5 +40,4 @@ services:
     depends_on:
       backend:
         condition: service_healthy
-    restart: unless-stopped
     restart: unless-stopped
