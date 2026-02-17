@@ -1,0 +1,50 @@
+# OS Specific
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Dependencies
+node_modules/
+backend/venv/
+backend/.venv/
+venv/
+.venv/
+env/
+.env/
+
+# Next.js
+.next/
+out/
+build/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.python-version
+
+# Logs and databases
+*.log
+local_database.db
+supabase/.temp/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Project Specific
+frontend/.env.local
+frontend/.env.production
+backend/.env
+artefactos_modelo_v2/*.pkl
+artefactos_modelo_v2/*.joblib

@@ -1,0 +1,123 @@
+{
+  "features_originales": [
+    "Grupo edad años",
+    "Sexo",
+    "Area",
+    "Tiempo dias de inicio de la fiebre en fecha de consulta",
+    "Vacunación",
+    "Antecedentes personales de patologías",
+    "Contacto epidemiologico con enfermedades infecciosas",
+    "Exposicion ambiental",
+    "Estado nutricional",
+    "Glasgow",
+    "Nivel de Triage por el TEP",
+    "Cayados absolutos",
+    "Plaquetas cel/mm3",
+    "Albúmina sérica g/dl",
+    "Globulina sérica g/dl"
+  ],
+  "features_post_ohe": [
+    "Tiempo dias de inicio de la fiebre en fecha de consulta",
+    "Glasgow",
+    "Cayados absolutos",
+    "Plaquetas cel/mm3",
+    "Albúmina sérica g/dl",
+    "Globulina sérica g/dl",
+    "Grupo edad años_2-5",
+    "Grupo edad años_6-12",
+    "Grupo edad años_Otro",
+    "Sexo_Masculino",
+    "Area_Urban",
+    "Vacunación_Incompleto",
+    "Antecedentes personales de patologías_Anemia por déficit de hierro",
+    "Antecedentes personales de patologías_Asma",
+    "Antecedentes personales de patologías_Bronquiolitis",
+    "Antecedentes personales de patologías_Impétigo",
+    "Antecedentes personales de patologías_Neumonía adquirida en la comunidad",
+    "Antecedentes personales de patologías_Ninguno",
+    "Antecedentes personales de patologías_Otitis media aguda",
+    "Antecedentes personales de patologías_Otro",
+    "Antecedentes personales de patologías_Pretérmino",
+    "Contacto epidemiologico con enfermedades infecciosas_Neumonía adquirida en la comunidad",
+    "Contacto epidemiologico con enfermedades infecciosas_Ninguno",
+    "Contacto epidemiologico con enfermedades infecciosas_Otro",
+    "Contacto epidemiologico con enfermedades infecciosas_Rinofaringitis",
+    "Contacto epidemiologico con enfermedades infecciosas_Sinusitis",
+    "Exposicion ambiental_Ninguno",
+    "Exposicion ambiental_Polución ambiental",
+    "Exposicion ambiental_Polvo casero",
+    "Exposicion ambiental_Preservativos químicos",
+    "Exposicion ambiental_Tabaquismo",
+    "Estado nutricional_Normal",
+    "Estado nutricional_Otro",
+    "Estado nutricional_Riesgo de desnutrición",
+    "Nivel de Triage por el TEP_Nivel II",
+    "Nivel de Triage por el TEP_Nivel III",
+    "Nivel de Triage por el TEP_Nivel IV"
+  ],
+  "cols_numericas": [
+    "Tiempo dias de inicio de la fiebre en fecha de consulta",
+    "Glasgow",
+    "Cayados absolutos",
+    "Plaquetas cel/mm3",
+    "Albúmina sérica g/dl",
+    "Globulina sérica g/dl"
+  ],
+  "cols_categoricas": [
+    "Grupo edad años",
+    "Sexo",
+    "Area",
+    "Vacunación",
+    "Antecedentes personales de patologías",
+    "Contacto epidemiologico con enfermedades infecciosas",
+    "Exposicion ambiental",
+    "Estado nutricional",
+    "Nivel de Triage por el TEP"
+  ],
+  "cols_escaladas": [
+    "Tiempo dias de inicio de la fiebre en fecha de consulta",
+    "Glasgow",
+    "Cayados absolutos",
+    "Plaquetas cel/mm3",
+    "Albúmina sérica g/dl",
+    "Globulina sérica g/dl"
+  ],
+  "categorias_raras": {
+    "Grupo edad años": [
+      "13-17"
+    ],
+    "Antecedentes personales de patologías": [
+      "Sinusitis",
+      "Infección urinaria",
+      "Secuelas enfermedad neurológica",
+      "Rinitis",
+      "Anemia de células falciformes",
+      "Cardiopatía congénita",
+      "Convulsión febril",
+      "Desnutrición",
+      "Hipertrofia de adenoides",
+      "Dengue",
+      "Sepsis neonatal",
+      "Mucopolisacaridosis",
+      "Meningitis",
+      "Mucopolisacaridosis ",
+      "Trisomía 21",
+      "Fibrosis quística",
+      "Rinofaringitis",
+      "Dermatitis atópica",
+      "Laringomalacia",
+      "Riñón poliquístico",
+      "Leucemia linfoide aguda"
+    ],
+    "Contacto epidemiologico con enfermedades infecciosas": [
+      "Amigdalitis",
+      "Impétigo",
+      "Enfermedad diarreica aguda",
+      "Dengue",
+      "Tuberculosis pulmonar"
+    ],
+    "Estado nutricional": [
+      "Obesidad"
+    ]
+  }
+}

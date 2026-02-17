@@ -1,0 +1,69 @@
+{
+  "version": "V2_Corregido_1.0",
+  "fecha": "2026-02-16_20-34-33",
+  "modelo_nombre": "Extra_Trees_Calibrado",
+  "modelo_tipo": "CalibratedClassifierCV",
+  "calibrado": true,
+  "variables_clinicas": [
+    "Grupo edad años",
+    "Sexo",
+    "Area",
+    "Tiempo dias de inicio de la fiebre en fecha de consulta",
+    "Vacunación",
+    "Antecedentes personales de patologías",
+    "Contacto epidemiologico con enfermedades infecciosas",
+    "Exposicion ambiental",
+    "Estado nutricional",
+    "Glasgow",
+    "Nivel de Triage por el TEP",
+    "Cayados absolutos",
+    "Plaquetas cel/mm3",
+    "Albúmina sérica g/dl",
+    "Globulina sérica g/dl"
+  ],
+  "n_features_originales": 15,
+  "n_features_post_ohe": 37,
+  "encoding": "OneHotEncoder(drop=first, handle_unknown=ignore)",
+  "escalado": "StandardScaler(solo continuas >2 unique)",
+  "balanceo": "SMOTE",
+  "pesos_clinicos": {
+    "0": 1.0,
+    "1": 2.0,
+    "2": 5.0
+  },
+  "random_seed": 42,
+  "metricas_holdout": {
+    "accuracy": 0.9195402298850575,
+    "f1_macro": 0.9255651147098516,
+    "f1_weighted": 0.9194864232863325,
+    "recall_severa": 0.9,
+    "precision_macro": 0.9430336307481125,
+    "scorer_clinico": 0.9327825573549258,
+    "errores_sev_leve": 0,
+    "gap_sobreajuste": 0.006174055829228253
+  },
+  "metricas_nested_cv": {
+    "accuracy": "0.9219±0.0071",
+    "f1_macro": "0.9219±0.0070",
+    "scorer_clinico": "0.9575±0.0062",
+    "recall_severa": "0.9886±0.0140",
+    "errores_sev_leve_total": 0
+  },
+  "train_size": 525,
+  "test_size": 87,
+  "clases": {
+    "0": "Leve",
+    "1": "Moderada",
+    "2": "Severa"
+  },
+  "correcciones_vs_v2_original": [
+    "LabelEncoder → OneHotEncoder (elimina ordinalidad espuria)",
+    "Split antes de todo procesamiento (anti-leakage)",
+    "Severidad_Ordinal como target (no LabelEncoder sobre Objetivo)",
+    "SimpleImputer(median/mode) en lugar de fill_value=0",
+    "Categorías raras agrupadas como Otro",
+    "Análisis SHAP completo",
+    "Nested CV para estimación insesgada",
+    "Calibración isotónica para producción"
+  ]
+}
