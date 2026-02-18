@@ -1,10 +1,10 @@
 /**
  * API client para el backend FastAPI.
- * Todas las llamadas incluyen el JWT de Supabase en el header.
+ * NEXT_PUBLIC_API_URL debe apuntar al dominio público del backend.
  */
 import { supabase } from './supabase';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
 
 /**
  * Obtiene un access token fresco directamente de Supabase.
