@@ -6,7 +6,7 @@ import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import {
   IconDashboard, IconEvaluation, IconPerformance, IconHistory,
-  IconSun, IconMoon, IconLogout, IconUser, IconMenu, IconClose
+  IconSun, IconMoon, IconLogout, IconUser, IconMenu, IconClose, IconChevronRight
 } from './Icons';
 
 const navItems = [
@@ -66,13 +66,20 @@ export default function Sidebar({ isOpen, onClose }) {
           </div>
 
           <div className="mobile-menu-content">
-            <div className="mobile-user-card">
+            <Link
+              href="/perfil"
+              className="mobile-user-card"
+              onClick={() => setMobileMenuOpen(false)}
+            >
               <div className="mobile-avatar">{initials}</div>
               <div className="mobile-user-details">
                 <div className="mobile-user-name">{profile?.nombre || 'Usuario'}</div>
                 <div className="mobile-user-role">{profile?.especialidad || 'Investigador'}</div>
               </div>
-            </div>
+              <div style={{ marginLeft: 'auto', color: 'var(--text-muted)' }}>
+                <IconChevronRight style={{ width: 20, height: 20, opacity: 0.5 }} />
+              </div>
+            </Link>
 
             <div className="mobile-menu-actions">
               <button className="mobile-menu-item" onClick={() => { toggleTheme(); setMobileMenuOpen(false); }}>
@@ -169,8 +176,8 @@ export default function Sidebar({ isOpen, onClose }) {
         {[
           { icon: IconDashboard, label: 'Inicio', href: '/dashboard' },
           { icon: IconEvaluation, label: 'Evaluar', href: '/evaluacion' },
+          { icon: IconPerformance, label: 'Validación', href: '/rendimiento' },
           { icon: IconHistory, label: 'Historial', href: '/historial' },
-          { icon: IconUser, label: 'Perfil', href: '/perfil' },
         ].map((item) => {
           const isActive = pathname === item.href;
           return (
@@ -312,27 +319,57 @@ export default function Sidebar({ isOpen, onClose }) {
             border-radius: var(--radius-lg);
             margin-bottom: 2rem;
             border: 1px solid var(--border);
+            text-decoration: none;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.2s ease;
+        }
+
+        .mobile-user-card:hover {
+            background: var(--bg-card-hover);
+            border-color: var(--border-hover);
+            transform: translateY(-1px);
+        }
+
+        .mobile-user-card:active {
+            transform: scale(0.98);
+            background: var(--bg-primary);
         }
         
         .mobile-avatar {
-            width: 40px; height: 40px;
+            width: 44px; height: 44px;
+            flex-shrink: 0;
             border-radius: 50%;
             background: var(--accent);
             color: white;
             display: flex; align-items: center; justify-content: center;
-            font-weight: 700;
+            font-weight: 600;
+            font-size: 1rem;
+            box-shadow: 0 2px 8px rgba(var(--accent-rgb), 0.25);
         }
         
         .mobile-user-details {
             display: flex; flex-direction: column;
+            gap: 2px;
+            flex: 1;
+            min-width: 0; /* Prevent flex overflow */
         }
         
         .mobile-user-name {
-            font-weight: 600; font-size: 0.95rem;
+            font-weight: 600; 
+            font-size: 0.95rem;
+            color: var(--text-primary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
         
         .mobile-user-role {
-            font-size: 0.8rem; color: var(--text-muted);
+            font-size: 0.8rem; 
+            color: var(--text-muted);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
         
         .mobile-menu-actions {
@@ -349,20 +386,28 @@ export default function Sidebar({ isOpen, onClose }) {
             font-weight: 500;
             text-align: left;
             cursor: pointer;
-            border-radius: var(--radius-md);
-            transition: background 0.2s;
+            border-radius: var(--radius-lg);
+            transition: all 0.2s ease;
+            margin-bottom: 0.25rem;
         }
         
         .mobile-menu-item:hover {
-            background: var(--bg-secondary);
+            background: var(--bg-hover);
+            transform: translateX(4px);
+        }
+        
+        .mobile-menu-item:active {
+            transform: scale(0.98);
         }
         
         .mobile-menu-item.danger {
             color: var(--severity-high);
+            margin-top: 0.5rem;
         }
         
         .mobile-menu-item.danger:hover {
             background: var(--severity-high-bg);
+            border: 1px solid var(--severity-high);
         }
         
         .mobile-icon-wrapper {
