@@ -30,11 +30,10 @@ def _get_jwks(supabase_url: str) -> dict:
 def _get_token_alg(token: str) -> str:
     """Extrae el algoritmo del header del JWT sin validarlo."""
     try:
-        header_b64 = token.split(".")[0]
-        header_b64 += "=" * (4 - len(header_b64) % 4)
-        header = json.loads(base64.b64decode(header_b64))
+        header = pyjwt.get_unverified_header(token)
         return header.get("alg", "HS256")
-    except Exception:
+    except Exception as e:
+        logger.error("Error al leer header del token: %s", e)
         return "HS256"
 
 
