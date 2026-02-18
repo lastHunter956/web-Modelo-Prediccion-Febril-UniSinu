@@ -7,25 +7,21 @@ import { supabase } from './supabase';
 const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
 
 /**
- * Obtiene un access token fresco directamente de Supabase.
- * Evita depender del estado de React que puede estar desactualizado.
- */
-async function getAccessToken() {
-    const { data, error } = await supabase.auth.getSession();
-    if (error || !data?.session?.access_token) {
-        throw new Error('No hay sesión activa. Inicie sesión nuevamente.');
-    }
-    return data.session.access_token;
-}
-
-/**
  * Realiza una predicción de severidad febril.
  * @param {Object} data - 15 variables clínicas
  * @param {string} [token] - JWT de Supabase (opcional, se obtiene automáticamente)
  */
 export async function predictSeverity(data, token) {
-    // Si no se pasa token, obtenerlo directamente de Supabase
-    const accessToken = token || await getAccessToken();
+    // Si no se pasa token, obtenerlo de la sesión actual
+    let accessToken = token;
+    if (!accessToken) {
+        const { data: { session } } = await supabase.auth.getSession();
+        accessToken = session?.access_token;
+    }
+
+    if (!accessToken) {
+        throw new Error('No hay sesión activa. Inicie sesión nuevamente.');
+    }
 
     const res = await fetch(`${API_URL}/api/predict`, {
         method: 'POST',
