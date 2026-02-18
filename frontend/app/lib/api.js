@@ -4,7 +4,9 @@
  */
 import { supabase } from './supabase';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
+// Siempre usar URLs relativas: /api/* es manejado por el Route Handler
+// que hace proxy server-side al backend (elimina CORS)
+const API_URL = '';
 
 /**
  * Realiza una predicción de severidad febril.

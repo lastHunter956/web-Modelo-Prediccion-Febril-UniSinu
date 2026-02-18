@@ -14,6 +14,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copiar artefactos del modelo
 COPY artifacts/ ./artifacts/
 
+# Cache buster: fuerza reconstrucción cuando cambia
+ARG CACHEBUST=1
+
 # Copiar código de la aplicación
 COPY app/ ./app/
 
