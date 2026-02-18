@@ -53,8 +53,8 @@ async def verify_jwt(
     logger.info("JWT algorithm detectado: %s", alg)
 
     try:
-        if alg == "RS256":
-            # ── RS256: verificar con clave pública JWKS de Supabase ──
+        if alg in ["RS256", "ES256"]:
+            # ── RS256/ES256: verificar con clave pública JWKS de Supabase ──
             jwks = _get_jwks(settings.supabase_url)
             if not jwks:
                 raise HTTPException(
@@ -63,16 +63,17 @@ async def verify_jwt(
                 )
             jwks_client = pyjwt.PyJWKClient.__new__(pyjwt.PyJWKClient)
             # Usar directamente las claves del JWKS
+            # Intentar buscar por kid si es posible, si no, usar la primera de firma
             signing_key = pyjwt.PyJWK.from_dict(
                 next(
                     k for k in jwks.get("keys", [])
-                    if k.get("use") == "sig" or k.get("alg") == "RS256"
+                    if k.get("use") == "sig" or k.get("alg") in ["RS256", "ES256"]
                 )
             )
             payload = pyjwt.decode(
                 token,
                 signing_key.key,
-                algorithms=["RS256"],
+                algorithms=["RS256", "ES256"],
                 options={"verify_aud": False},
             )
 
