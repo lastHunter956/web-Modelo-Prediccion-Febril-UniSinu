@@ -9,4 +9,4 @@ pydantic-settings
 imbalanced-learn
 slowapi
 httpx>=0.27.0
-httpx>=0.27.0
+
