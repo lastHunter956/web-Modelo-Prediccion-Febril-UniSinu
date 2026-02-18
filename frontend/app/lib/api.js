@@ -2,20 +2,36 @@
  * API client para el backend FastAPI.
  * Todas las llamadas incluyen el JWT de Supabase en el header.
  */
+import { supabase } from './supabase';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 /**
+ * Obtiene un access token fresco directamente de Supabase.
+ * Evita depender del estado de React que puede estar desactualizado.
+ */
+async function getAccessToken() {
+    const { data, error } = await supabase.auth.getSession();
+    if (error || !data?.session?.access_token) {
+        throw new Error('No hay sesión activa. Inicie sesión nuevamente.');
+    }
+    return data.session.access_token;
+}
+
+/**
  * Realiza una predicción de severidad febril.
  * @param {Object} data - 15 variables clínicas
- * @param {string} token - JWT de Supabase
+ * @param {string} [token] - JWT de Supabase (opcional, se obtiene automáticamente)
  */
 export async function predictSeverity(data, token) {
+    // Si no se pasa token, obtenerlo directamente de Supabase
+    const accessToken = token || await getAccessToken();
+
     const res = await fetch(`${API_URL}/api/predict`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
+            Authorization: `Bearer ${accessToken}`,
         },
         body: JSON.stringify(data),
     });

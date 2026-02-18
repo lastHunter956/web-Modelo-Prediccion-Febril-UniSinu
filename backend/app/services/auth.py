@@ -44,17 +44,33 @@ async def verify_jwt(
         alg = header.get("alg", "HS256")
         logger.info("JWT alg=%s, kid=%s", alg, header.get("kid"))
 
+        payload = None
+
         if alg == "ES256":
             # Token ES256 → verificar con JWKS (clave pública)
-            jwks_client = _get_jwks_client()
-            signing_key = jwks_client.get_signing_key_from_jwt(token)
-            payload = pyjwt.decode(
-                token,
-                signing_key.key,
-                algorithms=["ES256"],
-                audience="authenticated",
-            )
-        else:
+            try:
+                jwks_client = _get_jwks_client()
+                signing_key = jwks_client.get_signing_key_from_jwt(token)
+                payload = pyjwt.decode(
+                    token,
+                    signing_key.key,
+                    algorithms=["ES256"],
+                    audience="authenticated",
+                )
+            except Exception as jwks_err:
+                # Fallback: intentar con HS256 si JWKS falla (red interna Docker)
+                logger.warning("JWKS falló (%s), intentando HS256 fallback", jwks_err)
+                if settings.supabase_jwt_secret:
+                    payload = pyjwt.decode(
+                        token,
+                        settings.supabase_jwt_secret,
+                        algorithms=["HS256"],
+                        audience="authenticated",
+                    )
+                else:
+                    raise jwks_err
+
+        if payload is None:
             # Token HS256 (legacy) → verificar con secreto
             payload = pyjwt.decode(
                 token,
