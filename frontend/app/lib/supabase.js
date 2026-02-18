@@ -11,5 +11,16 @@ if (!supabaseUrl || !supabaseAnonKey) {
 
 export const supabase = createClient(
   supabaseUrl || '',
-  supabaseAnonKey || ''
+  supabaseAnonKey || '',
+  {
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+      detectSessionInUrl: true,
+      // Desactivar Navigator LockManager para evitar timeouts en producción
+      lock: 'no-op',
+      // Usar almacenamiento por defecto (localStorage)
+      storage: typeof window !== 'undefined' ? window.localStorage : undefined,
+    },
+  }
 );
