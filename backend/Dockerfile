@@ -28,7 +28,8 @@ ENV PORT=8000
 EXPOSE ${PORT}
 
 # Healthcheck para plataformas que lo soporten
-HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=5 \
     CMD curl -f http://localhost:${PORT}/api/health || exit 1
 
 # Usar shell form para que $PORT se resuelva en runtime
