@@ -44,6 +44,9 @@ export default function PredictionResult({ result, onClose, onSave, isSaving }) 
             <div className="modal glass-panel" onClick={(e) => e.stopPropagation()} style={{
                 maxWidth: '500px',
                 width: '90%',
+                maxHeight: '90vh',
+                display: 'flex',
+                flexDirection: 'column',
                 borderRadius: '24px',
                 padding: '0',
                 border: `1px solid rgba(255, 255, 255, 0.1)`,
@@ -59,7 +62,8 @@ export default function PredictionResult({ result, onClose, onSave, isSaving }) 
                     borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
                     display: 'flex',
                     flexDirection: 'column',
-                    alignItems: 'center'
+                    alignItems: 'center',
+                    flexShrink: 0
                 }}>
                     <div style={{
                         display: 'inline-flex',
@@ -112,7 +116,7 @@ export default function PredictionResult({ result, onClose, onSave, isSaving }) 
                     </div>
                 </div>
 
-                <div style={{ padding: '2rem' }}>
+                <div style={{ padding: '2rem', overflowY: 'auto' }}>
                     {/* Probability Bars */}
                     <div className="confidence-bars" style={{ gap: '1rem' }}>
                         {['leve', 'moderada', 'severa'].map((key) => (
