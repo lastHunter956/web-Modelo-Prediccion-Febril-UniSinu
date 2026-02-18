@@ -11,18 +11,35 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let mounted = true;
+
+    // Timeout de seguridad: si getSession tarda más de 5s, dejar de cargar
+    const timeout = setTimeout(() => {
+      if (mounted && loading) {
+        console.warn('⚠️ getSession timeout — continuando sin sesión');
+        setLoading(false);
+      }
+    }, 5000);
+
     // Obtener sesión actual
-    supabase.auth.getSession().then(({ data: { session: s } }) => {
-      setSession(s);
-      setUser(s?.user ?? null);
-      if (s?.user) fetchProfile(s.user.id);
-      setLoading(false);
-    });
+    supabase.auth.getSession()
+      .then(({ data: { session: s } }) => {
+        if (!mounted) return;
+        setSession(s);
+        setUser(s?.user ?? null);
+        if (s?.user) fetchProfile(s.user.id);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error('Error obteniendo sesión:', err);
+        if (mounted) setLoading(false);
+      });
 
     // Escuchar cambios de auth
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, s) => {
+      if (!mounted) return;
       setSession(s);
       setUser(s?.user ?? null);
       if (s?.user) {
@@ -32,7 +49,11 @@ export function AuthProvider({ children }) {
       }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      clearTimeout(timeout);
+      subscription.unsubscribe();
+    };
   }, []);
 
   async function fetchProfile(userId) {
