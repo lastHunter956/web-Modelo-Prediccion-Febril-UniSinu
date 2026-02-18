@@ -61,15 +61,34 @@ async def verify_jwt(
                     status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
                     detail="No se pudo obtener las claves públicas de Supabase",
                 )
-            jwks_client = pyjwt.PyJWKClient.__new__(pyjwt.PyJWKClient)
-            # Usar directamente las claves del JWKS
-            # Intentar buscar por kid si es posible, si no, usar la primera de firma
-            signing_key = pyjwt.PyJWK.from_dict(
-                next(
-                    k for k in jwks.get("keys", [])
-                    if k.get("use") == "sig" or k.get("alg") in ["RS256", "ES256"]
+            
+            # Intentar obtener llave por kid
+            try:
+                header = pyjwt.get_unverified_header(token)
+                kid = header.get("kid")
+            except Exception:
+                kid = None
+
+            key_data = None
+            if kid:
+                key_data = next((k for k in jwks.get("keys", []) if k.get("kid") == kid), None)
+            
+            # Fallback: usar la primera llave de firma si no se encuentra por kid
+            if not key_data:
+                key_data = next(
+                    (k for k in jwks.get("keys", []) 
+                     if k.get("use") == "sig" or k.get("alg") in ["RS256", "ES256"]),
+                    None
                 )
-            )
+            
+            if not key_data:
+                logger.error("No se encontró clave pública válida en JWKS para el token")
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Clave de firma no encontrada",
+                )
+
+            signing_key = pyjwt.PyJWK.from_dict(key_data)
             payload = pyjwt.decode(
                 token,
                 signing_key.key,
