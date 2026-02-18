@@ -10,6 +10,9 @@ RUN npm ci || npm install
 FROM base AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
+
+# Cache buster: cualquier cambio en este ARG invalida el cache a partir de aquí
+ARG CACHEBUST=1
 COPY . .
 
 # Build-time env vars (Next.js las incrusta en el bundle)

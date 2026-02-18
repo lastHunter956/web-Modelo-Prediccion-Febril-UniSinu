@@ -81,18 +81,3 @@ async def verify_jwt(
 def get_user_id(payload: dict = Depends(verify_jwt)) -> str:
     """Extrae el user_id del JWT."""
     return payload.get("sub", "")
-            detail="Token de autenticación inválido o expirado",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    except Exception as e:
-        logger.error("Error inesperado validando JWT: %s", e)
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Error de autenticación",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-
-
-def get_user_id(payload: dict = Depends(verify_jwt)) -> str:
-    """Extrae el user_id del JWT."""
-    return payload.get("sub", "")
