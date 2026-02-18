@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, Fragment } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { getEvaluaciones } from '../../lib/api';
 import { IconSearch, IconHistory, IconEvaluation, IconChevronLeft, IconChevronRight, IconEdit } from '../../components/Icons';
@@ -173,64 +173,68 @@ export default function HistorialPage() {
                 <tbody>
                   {paginated.map((e) => {
                     const datos = e.datos_paciente || {};
-                    return (
-                      <tr
-                        key={e.id}
-                        onClick={() => setExpandedRow(expandedRow === e.id ? null : e.id)}
-                        style={{ cursor: 'pointer' }}
-                      >
-                        <td style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '0.8rem' }}>
-                          {formatDate(e.created_at)}
-                        </td>
-                        <td>{datos.grupo_edad || '—'}</td>
-                        <td><span className="badge badge-info">{datos.triage || '—'}</span></td>
-                        <td><span className={getBadgeClass(e.prediccion)}>{e.prediccion}</span></td>
-                        <td>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                            <div className="progress-bar" style={{ width: '60px' }}>
-                              <div
-                                className="progress-fill"
-                                style={{
-                                  width: (e.confianza || 0) + '%',
-                                  background:
-                                    e.prediccion === 'Leve' ? 'var(--severity-low)' :
-                                      e.prediccion === 'Moderada' ? 'var(--severity-mid)' :
-                                        'var(--severity-high)',
-                                }}
-                              />
-                            </div>
-                            <span style={{ fontWeight: 600, fontSize: '0.8rem' }}>
-                              {e.confianza ? `${e.confianza}%` : '—'}
-                            </span>
-                          </div>
-                        </td>
-                        <td onClick={(x) => handleEditObservation(x, e.id)}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: observaciones[e.id] ? 'var(--text-primary)' : 'var(--text-muted)' }}>
-                            {observaciones[e.id] || '—'}
-                            <IconEdit style={{ width: 14, height: 14, opacity: 0.5 }} />
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-
-                  {/* Expanded Row Desktop */}
-                  {paginated.map((e) => {
-                    if (expandedRow !== e.id) return null;
-                    const datos = e.datos_paciente || {};
+                    const isExpanded = expandedRow === e.id;
                     const probs = e.probabilidades || {};
+
                     return (
-                      <tr key={e.id + '-exp'}>
-                        <td colSpan={6} style={{ background: 'var(--bg-secondary)', padding: '1rem 1.5rem' }}>
-                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '0.75rem', fontSize: '0.825rem' }}>
-                            <div><span style={{ color: 'var(--text-muted)' }}>Sexo:</span> <strong>{datos.sexo || '—'}</strong></div>
-                            <div><span style={{ color: 'var(--text-muted)' }}>Área:</span> <strong>{datos.area || '—'}</strong></div>
-                            <div><span style={{ color: 'var(--text-muted)' }}>Días fiebre:</span> <strong>{datos.tiempo_fiebre ?? '—'}</strong></div>
-                            <div><span style={{ color: 'var(--text-muted)' }}>P(Leve):</span> <strong>{probs.leve != null ? `${probs.leve}%` : '—'}</strong></div>
-                            <div><span style={{ color: 'var(--text-muted)' }}>P(Severa):</span> <strong>{probs.severa != null ? `${probs.severa}%` : '—'}</strong></div>
-                          </div>
-                        </td>
-                      </tr>
+                      <Fragment key={e.id}>
+                        <tr
+                          onClick={() => setExpandedRow(isExpanded ? null : e.id)}
+                          style={{
+                            cursor: 'pointer',
+                            background: isExpanded ? 'rgba(255,255,255,0.03)' : 'transparent',
+                            transition: 'background 0.2s ease'
+                          }}
+                        >
+                          <td style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '0.8rem' }}>
+                            {formatDate(e.created_at)}
+                          </td>
+                          <td>{datos.grupo_edad || '—'}</td>
+                          <td><span className="badge badge-info">{datos.triage || '—'}</span></td>
+                          <td><span className={getBadgeClass(e.prediccion)}>{e.prediccion}</span></td>
+                          <td>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                              <div className="progress-bar" style={{ width: '60px' }}>
+                                <div
+                                  className="progress-fill"
+                                  style={{
+                                    width: (e.confianza || 0) + '%',
+                                    background:
+                                      e.prediccion === 'Leve' ? 'var(--severity-low)' :
+                                        e.prediccion === 'Moderada' ? 'var(--severity-mid)' :
+                                          'var(--severity-high)',
+                                  }}
+                                />
+                              </div>
+                              <span style={{ fontWeight: 600, fontSize: '0.8rem' }}>
+                                {e.confianza ? `${e.confianza}%` : '—'}
+                              </span>
+                            </div>
+                          </td>
+                          <td onClick={(x) => { x.stopPropagation(); handleEditObservation(x, e.id); }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: observaciones[e.id] ? 'var(--text-primary)' : 'var(--text-muted)' }}>
+                              {observaciones[e.id] || '—'}
+                              <IconEdit style={{ width: 14, height: 14, opacity: 0.5 }} />
+                            </div>
+                          </td>
+                        </tr>
+
+                        {isExpanded && (
+                          <tr className="expanded-row-desktop">
+                            <td colSpan={6} style={{ padding: 0, borderBottom: '1px solid var(--border)' }}>
+                              <div style={{ background: 'rgba(0,0,0,0.2)', padding: '1rem 1.5rem', borderLeft: '4px solid var(--accent)' }}>
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '1rem', fontSize: '0.85rem' }}>
+                                  <div><span style={{ color: 'var(--text-muted)', display: 'block', fontSize: '0.75rem', marginBottom: '2px' }}>Sexo</span> <strong style={{ color: 'var(--text-primary)' }}>{datos.sexo || '—'}</strong></div>
+                                  <div><span style={{ color: 'var(--text-muted)', display: 'block', fontSize: '0.75rem', marginBottom: '2px' }}>Área</span> <strong style={{ color: 'var(--text-primary)' }}>{datos.area || '—'}</strong></div>
+                                  <div><span style={{ color: 'var(--text-muted)', display: 'block', fontSize: '0.75rem', marginBottom: '2px' }}>Días de fiebre</span> <strong style={{ color: 'var(--text-primary)' }}>{datos.tiempo_fiebre ?? '—'}</strong></div>
+                                  <div><span style={{ color: 'var(--text-muted)', display: 'block', fontSize: '0.75rem', marginBottom: '2px' }}>Probabilidad (Leve)</span> <strong style={{ color: 'var(--severity-low)' }}>{probs.leve != null ? `${probs.leve}%` : '—'}</strong></div>
+                                  <div><span style={{ color: 'var(--text-muted)', display: 'block', fontSize: '0.75rem', marginBottom: '2px' }}>Probabilidad (Severa)</span> <strong style={{ color: 'var(--severity-high)' }}>{probs.severa != null ? `${probs.severa}%` : '—'}</strong></div>
+                                </div>
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </Fragment>
                     );
                   })}
                 </tbody>
@@ -277,14 +281,22 @@ export default function HistorialPage() {
                       </div>
 
                       {isExpanded && (
-                        <div style={{ marginTop: '0.5rem', paddingTop: '0.5rem', borderTop: '1px solid var(--border)', fontSize: '0.8rem' }}>
-                          <div className="eval-card-row">
-                            <span className="eval-card-label">Días fiebre:</span>
+                        <div style={{ marginTop: '0.75rem', paddingTop: '0.75rem', borderTop: '1px solid var(--border)', fontSize: '0.8rem', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                          <div className="eval-card-field">
+                            <span className="eval-card-label">Días fiebre</span>
                             <span className="eval-card-val">{datos.tiempo_fiebre ?? '—'}</span>
                           </div>
-                          <div className="eval-card-row">
-                            <span className="eval-card-label">Sexo:</span>
+                          <div className="eval-card-field">
+                            <span className="eval-card-label">Sexo</span>
                             <span className="eval-card-val">{datos.sexo || '—'}</span>
+                          </div>
+                          <div className="eval-card-field">
+                            <span className="eval-card-label">Área</span>
+                            <span className="eval-card-val">{datos.area || '—'}</span>
+                          </div>
+                          <div className="eval-card-field">
+                            <span className="eval-card-label">P(Severa)</span>
+                            <span className="eval-card-val" style={{ color: 'var(--severity-high)' }}>{e.probabilidades?.severa ? e.probabilidades.severa + '%' : '—'}</span>
                           </div>
                         </div>
                       )}

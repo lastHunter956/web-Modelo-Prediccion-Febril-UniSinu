@@ -61,42 +61,87 @@ function SeverityDonut({ leve, moderada, severa, total }) {
   );
 }
 
-/* ── Sparkline de actividad últimos 7 días ── */
+/* ── Sparkline de actividad últimos 7 días (SVG Area) ── */
 function WeekSparkline({ evaluaciones }) {
-  const days = useMemo(() => {
+  const { days, max } = useMemo(() => {
     const arr = Array(7).fill(0);
     const now = new Date();
+    // Normalize "now" to start of day for accurate day diffing
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
     (evaluaciones || []).forEach((e) => {
-      const diff = Math.floor((now - new Date(e.created_at)) / 86400000);
-      if (diff >= 0 && diff < 7) arr[6 - diff]++;
+      const d = new Date(e.created_at);
+      const entryDay = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+      const diffTime = todayStart - entryDay;
+      const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+      if (diffDays >= 0 && diffDays < 7) {
+        arr[6 - diffDays]++;
+      }
     });
-    return arr;
+    return { days: arr, max: Math.max(...arr, 1) };
   }, [evaluaciones]);
 
-  const max = Math.max(...days, 1);
+  const points = days.map((val, i) => {
+    const x = (i / 6) * 100;
+    const y = 100 - (val / max) * 100; // Invert SVG y-axis
+    return `${x},${y}`;
+  }).join(' ');
+
+  // Create area path: start bottom-left, go to points, end bottom-right
+  const areaPath = `M0,100 ${days.map((val, i) => `L${(i / 6) * 100},${100 - (val / max) * 100}`).join(' ')} L100,100 Z`;
+
   const dayLabels = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
-  const today = new Date().getDay();
-  const labelsOrdered = [];
-  for (let i = 6; i >= 0; i--) {
-    const d = (today - i + 7) % 7;
-    labelsOrdered.push(dayLabels[d === 0 ? 6 : d - 1]);
-  }
+  const today = new Date().getDay(); // 0=Sun, 1=Mon
+  // Reorder labels so the last one is today
+  // If today is Monday (1), order is: [M, X, J, V, S, D, L] (Last 7 days ending today)
+  // Actually simpler: just get the day letter for (Today - 6 + i)
+  const labels = Array.from({ length: 7 }, (_, i) => {
+    const dIndex = (today - 6 + i + 7) % 7;
+    // dayLabels index: 0=Mon...6=Sun. Date.getDay(): 0=Sun...6=Sat.
+    // Map Date.getDay() to dayLabels index: 0->6, 1->0, 2->1...
+    const mapDay = (d) => (d === 0 ? 6 : d - 1);
+    return dayLabels[mapDay(dIndex)];
+  });
 
   return (
-    <div className="dash-sparkline">
-      {days.map((v, i) => (
-        <div key={i} className="dash-spark-col">
-          <div
-            className="dash-spark-bar"
-            style={{
-              height: `${Math.max((v / max) * 100, 6)}%`,
-              background: v > 0 ? 'var(--accent)' : 'var(--border)',
-              opacity: v > 0 ? 1 : 0.4,
-            }}
+    <div className="dash-sparkline-container" style={{ position: 'relative', height: '100px', width: '100%', marginTop: '1rem' }}>
+      <svg viewBox="0 0 100 100" preserveAspectRatio="none" style={{ width: '100%', height: '100%', overflow: 'visible' }}>
+        <defs>
+          <linearGradient id="sparkGradient" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="var(--accent)" stopOpacity="0.3" />
+            <stop offset="100%" stopColor="var(--accent)" stopOpacity="0" />
+          </linearGradient>
+        </defs>
+        {/* Grid lines */}
+        <line x1="0" y1="25" x2="100" y2="25" stroke="var(--border)" strokeWidth="0.5" strokeDasharray="2" />
+        <line x1="0" y1="50" x2="100" y2="50" stroke="var(--border)" strokeWidth="0.5" strokeDasharray="2" />
+        <line x1="0" y1="75" x2="100" y2="75" stroke="var(--border)" strokeWidth="0.5" strokeDasharray="2" />
+
+        {/* Area */}
+        <path d={areaPath} fill="url(#sparkGradient)" stroke="none" />
+
+        {/* Line */}
+        <polyline points={points} fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
+
+        {/* Points */}
+        {days.map((val, i) => (
+          val > 0 && <circle
+            key={i}
+            cx={(i / 6) * 100}
+            cy={100 - (val / max) * 100}
+            r="3"
+            fill="var(--bg-card)"
+            stroke="var(--accent)"
+            strokeWidth="1.5"
+            vectorEffect="non-scaling-stroke"
           />
-          <span className="dash-spark-label">{labelsOrdered[i]}</span>
-        </div>
-      ))}
+        ))}
+      </svg>
+
+      <div className="dash-spark-labels" style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.5rem', fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+        {labels.map((l, i) => <span key={i}>{l}</span>)}
+      </div>
     </div>
   );
 }
