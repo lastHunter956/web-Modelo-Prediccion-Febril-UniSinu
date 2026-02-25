@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { IconUsers, IconClipboard, IconHeart, IconFlask, IconLoader, IconActivity } from './Icons';
 
 /**
- * Opciones de dropdowns — mapeo exacto a las categorías del modelo V2.
+ * Opciones de dropdowns — mapeo exacto a las categorías del modelo V3.
  */
 const OPTIONS = {
     grupo_edad: [
@@ -28,8 +28,6 @@ const OPTIONS = {
         { value: 'Ninguno', label: 'Ninguno' },
         { value: 'Asma', label: 'Asma' },
         { value: 'Bronquiolitis', label: 'Bronquiolitis' },
-        { value: 'Anemia por déficit de hierro', label: 'Anemia por déficit de hierro' },
-        { value: 'Impétigo', label: 'Impétigo' },
         { value: 'Neumonía adquirida en la comunidad', label: 'Neumonía adquirida en la comunidad' },
         { value: 'Otitis media aguda', label: 'Otitis media aguda' },
         { value: 'Pretérmino', label: 'Pretérmino' },
@@ -38,7 +36,6 @@ const OPTIONS = {
     contacto_epidemiologico: [
         { value: 'Ninguno', label: 'Ninguno' },
         { value: 'Rinofaringitis', label: 'Rinofaringitis' },
-        { value: 'Neumonía adquirida en la comunidad', label: 'Neumonía adquirida en la comunidad' },
         { value: 'Sinusitis', label: 'Sinusitis' },
         { value: 'Otro', label: 'Otro' },
     ],
@@ -54,11 +51,15 @@ const OPTIONS = {
         { value: 'Riesgo de desnutrición', label: 'Riesgo de desnutrición' },
         { value: 'Otro', label: 'Otro (Obesidad)' },
     ],
-    triage: [
-        { value: 'Nivel I', label: 'Nivel I — Resucitación' },
-        { value: 'Nivel II', label: 'Nivel II — Emergencia' },
-        { value: 'Nivel III', label: 'Nivel III — Urgencia' },
-        { value: 'Nivel IV', label: 'Nivel IV — Menos Urgente' },
+    hallazgo_examen_fisico: [
+        { value: 'Ninguno', label: 'Ninguno' },
+        { value: 'Eritema orofaríngeo', label: 'Eritema orofaríngeo' },
+        { value: 'Exudado purulento retrofaríngeo', label: 'Exudado purulento retrofaríngeo' },
+        { value: 'Hipertrofia de amigdalas con placas purulentas', label: 'Hipertrofia de amígdalas con placas purulentas' },
+        { value: 'Signos inflamatorios membrana timpánica', label: 'Signos inflamatorios membrana timpánica' },
+        { value: 'Taquipnea', label: 'Taquipnea' },
+        { value: 'Tirajes subcostales', label: 'Tirajes subcostales' },
+        { value: 'Otro', label: 'Otro' },
     ],
 };
 
@@ -72,12 +73,15 @@ const INITIAL_DATA = {
     contacto_epidemiologico: 'Ninguno',
     exposicion_ambiental: 'Ninguno',
     estado_nutricional: 'Normal',
+    hallazgo_examen_fisico: 'Ninguno',
     glasgow: '15',
-    triage: 'Nivel III',
     cayados: '',
     plaquetas: '',
     albumina: '',
     globulina: '',
+    procalcitonina: '',
+    leucocitos: '',
+    pcr: '',
 };
 
 export default function PatientForm({ onSubmit, isLoading }) {
@@ -100,12 +104,15 @@ export default function PatientForm({ onSubmit, isLoading }) {
             contacto_epidemiologico: formData.contacto_epidemiologico,
             exposicion_ambiental: formData.exposicion_ambiental,
             estado_nutricional: formData.estado_nutricional,
+            hallazgo_examen_fisico: formData.hallazgo_examen_fisico,
             glasgow: parseInt(formData.glasgow),
-            triage: formData.triage,
             cayados: formData.cayados ? parseFloat(formData.cayados) : null,
             plaquetas: formData.plaquetas ? parseFloat(formData.plaquetas) : null,
             albumina: formData.albumina ? parseFloat(formData.albumina) : null,
             globulina: formData.globulina ? parseFloat(formData.globulina) : null,
+            procalcitonina: formData.procalcitonina ? parseFloat(formData.procalcitonina) : null,
+            leucocitos: formData.leucocitos ? parseFloat(formData.leucocitos) : null,
+            pcr: formData.pcr ? parseFloat(formData.pcr) : null,
         };
 
         onSubmit(payload);
@@ -228,9 +235,9 @@ export default function PatientForm({ onSubmit, isLoading }) {
                         </select>
                     </div>
                     <div className="input-group">
-                        <label>Nivel de Triage (TEP)</label>
-                        <select className="select" name="triage" value={formData.triage} onChange={handleChange}>
-                            {OPTIONS.triage.map((o) => (
+                        <label>Hallazgo al Examen Físico</label>
+                        <select className="select" name="hallazgo_examen_fisico" value={formData.hallazgo_examen_fisico} onChange={handleChange}>
+                            {OPTIONS.hallazgo_examen_fisico.map((o) => (
                                 <option key={o.value} value={o.value}>{o.label}</option>
                             ))}
                         </select>
@@ -291,6 +298,44 @@ export default function PatientForm({ onSubmit, isLoading }) {
                             value={formData.globulina}
                             onChange={handleChange}
                             placeholder="Ej: 2.5"
+                            step="0.1"
+                            min="0"
+                        />
+                    </div>
+                    <div className="input-group">
+                        <label>Procalcitonina (ng/mL)</label>
+                        <input
+                            className="input"
+                            type="number"
+                            name="procalcitonina"
+                            value={formData.procalcitonina}
+                            onChange={handleChange}
+                            placeholder="Ej: 0.25"
+                            step="0.01"
+                            min="0"
+                        />
+                    </div>
+                    <div className="input-group">
+                        <label>Leucocitos (cel/mm³)</label>
+                        <input
+                            className="input"
+                            type="number"
+                            name="leucocitos"
+                            value={formData.leucocitos}
+                            onChange={handleChange}
+                            placeholder="Ej: 10000"
+                            min="0"
+                        />
+                    </div>
+                    <div className="input-group">
+                        <label>Proteína C Reactiva (mg/dL)</label>
+                        <input
+                            className="input"
+                            type="number"
+                            name="pcr"
+                            value={formData.pcr}
+                            onChange={handleChange}
+                            placeholder="Ej: 5.0"
                             step="0.1"
                             min="0"
                         />

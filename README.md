@@ -6,13 +6,13 @@ Sistema web para predecir la severidad de cuadros febriles en pacientes pediátr
 
 ## 📋 Stack
 
-| Componente    | Tecnología                                 |
-| ------------- | ------------------------------------------ |
-| **Frontend**  | Next.js 14 (App Router)                    |
-| **Backend**   | FastAPI (Python 3.11)                      |
-| **Modelo ML** | Extra Trees Calibrado (scikit-learn 1.6.1) |
-| **Auth & DB** | Supabase (Auth + Postgres)                 |
-| **Estilos**   | Vanilla CSS (Dark/Light mode)              |
+| Componente    | Tecnología                                    |
+| ------------- | --------------------------------------------- |
+| **Frontend**  | Next.js 14 (App Router)                       |
+| **Backend**   | FastAPI (Python 3.11)                         |
+| **Modelo ML** | Random Forest Calibrado (scikit-learn 1.6.1)  |
+| **Auth & DB** | Supabase (Auth + Postgres)                    |
+| **Estilos**   | Vanilla CSS (Dark/Light mode)                 |
 
 ## ⚡ Setup Rápido
 
@@ -82,10 +82,10 @@ Accede a:
 
 ## 🧠 Modelo ML
 
-- **Algoritmo**: Extra Trees Classifier + CalibratedClassifierCV
-- **15 Variables Clínicas**: grupo edad, sexo, área, tiempo de fiebre, vacunación, antecedentes, contacto epidemiológico, exposición ambiental, estado nutricional, Glasgow, triage TEP, cayados, plaquetas, albúmina, globulina
+- **Algoritmo**: Random Forest Classifier + CalibratedClassifierCV
+- **18 Variables Clínicas**: grupo edad, sexo, área, tiempo de fiebre, vacunación, antecedentes, contacto epidemiológico, exposición ambiental, estado nutricional, hallazgo al examen físico, Glasgow, cayados, plaquetas, albúmina, globulina, procalcitonina, leucocitos, proteína C reactiva
 - **3 Clases**: Leve (0), Moderada (1), Severa (2)
-- **Métricas**: Accuracy 91.95% | F1-Macro 92.56% | 0 errores críticos
+- **Métricas**: Accuracy 68.97% | F1-Macro 70.75% | 0 errores críticos
 
 ## 📁 Estructura
 

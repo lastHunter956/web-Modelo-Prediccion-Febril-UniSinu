@@ -1,0 +1,72 @@
+{
+  "version": "V3_Final_2.0",
+  "fecha": "2026-02-24_17-22-19",
+  "modelo_nombre": "Random_Forest_Calibrado",
+  "modelo_tipo": "CalibratedClassifierCV",
+  "calibrado": true,
+  "variables_clinicas": [
+    "Grupo edad años",
+    "Sexo",
+    "Area",
+    "Tiempo dias de inicio de la fiebre en fecha de consulta",
+    "Vacunación",
+    "Antecedentes personales de patologías",
+    "Contacto epidemiologico con enfermedades infecciosas",
+    "Exposicion ambiental",
+    "Estado nutricional",
+    "Hallazgo relevante al examen fisico",
+    "Glasgow",
+    "Cayados absolutos",
+    "Plaquetas cel/mm3",
+    "Albúmina sérica g/dl",
+    "Globulina sérica g/dl",
+    "Procalcitonina ng/mL",
+    "Leucocitos cel/mm3",
+    "Proteina C reactiva mg/Dl"
+  ],
+  "n_features_originales": 18,
+  "n_features_post_ohe": 44,
+  "encoding": "OneHotEncoder(drop=first, handle_unknown=ignore)",
+  "escalado": "StandardScaler(solo continuas >2 unique)",
+  "balanceo": "SMOTE",
+  "pesos_clinicos": {
+    "0": 1.0,
+    "1": 2.0,
+    "2": 5.0
+  },
+  "random_seed": 42,
+  "metricas_holdout": {
+    "accuracy": 0.6896551724137931,
+    "f1_macro": 0.7074586106844172,
+    "f1_weighted": 0.6891490250778349,
+    "recall_severa": 0.7,
+    "precision_macro": 0.7383786848072562,
+    "scorer_clinico_v3": 0.729100050701369,
+    "errores_sev_leve": 0,
+    "gap_sobreajuste": 0.17161650388678484
+  },
+  "metricas_nested_cv": {
+    "accuracy": "0.7457±0.0334",
+    "f1_macro": "0.6947±0.0215",
+    "scorer_clinico_v3": "0.6613±0.0091",
+    "recall_severa": "0.3964±0.0262",
+    "errores_sev_leve_total": 1
+  },
+  "train_size": 346,
+  "test_size": 87,
+  "clases": {
+    "0": "Leve",
+    "1": "Moderada",
+    "2": "Severa"
+  },
+  "correcciones_vs_v2_original": [
+    "LabelEncoder → OneHotEncoder (elimina ordinalidad espuria)",
+    "Split antes de todo procesamiento (anti-leakage)",
+    "Severidad_Ordinal como target (no LabelEncoder sobre Objetivo)",
+    "SimpleImputer(median/mode) en lugar de fill_value=0",
+    "Categorías raras agrupadas como Otro",
+    "Análisis SHAP completo",
+    "Nested CV para estimación insesgada",
+    "Calibración isotónica para producción"
+  ]
+}

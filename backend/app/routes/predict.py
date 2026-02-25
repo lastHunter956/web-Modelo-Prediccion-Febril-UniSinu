@@ -15,9 +15,9 @@ async def predict(
     _user: dict = Depends(verify_jwt),
 ):
     """
-    Recibe 15 variables clínicas y retorna la predicción de severidad.
+    Recibe 18 variables clínicas y retorna la predicción de severidad.
 
-    El pipeline completo (imputers + OHE + scaler + modelo) se ejecuta
+    El pipeline completo (imputers + OHE + scaler + modelo V3) se ejecuta
     internamente. El resultado incluye la clase predicha, probabilidades
     de las 3 clases, factores contribuyentes y un disclaimer legal.
     """
@@ -30,9 +30,9 @@ async def predict(
     data = patient.model_dump()
 
     logger.info(
-        "Predicción solicitada — usuario: %s, triage: %s, glasgow: %s",
+        "Predicción solicitada — usuario: %s, hallazgo: %s, glasgow: %s",
         _user.get("email", "?"),
-        data.get("triage"),
+        data.get("hallazgo_examen_fisico"),
         data.get("glasgow"),
     )
 

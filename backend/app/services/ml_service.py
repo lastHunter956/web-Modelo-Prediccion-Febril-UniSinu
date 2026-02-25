@@ -8,7 +8,7 @@ from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
-# Nombres de columnas exactos que espera el pipeline
+# Nombres de columnas exactos que espera el pipeline V3
 COLUMN_NAMES = [
     "Grupo edad años",
     "Sexo",
@@ -19,12 +19,15 @@ COLUMN_NAMES = [
     "Contacto epidemiologico con enfermedades infecciosas",
     "Exposicion ambiental",
     "Estado nutricional",
+    "Hallazgo relevante al examen fisico",
     "Glasgow",
-    "Nivel de Triage por el TEP",
     "Cayados absolutos",
     "Plaquetas cel/mm3",
     "Albúmina sérica g/dl",
     "Globulina sérica g/dl",
+    "Procalcitonina ng/mL",
+    "Leucocitos cel/mm3",
+    "Proteina C reactiva mg/Dl",
 ]
 
 CLASS_LABELS = {0: "Leve", 1: "Moderada", 2: "Severa"}
@@ -112,6 +115,7 @@ class MLService:
             "antecedentes": "Antecedentes personales de patologías",
             "contacto_epidemiologico": "Contacto epidemiologico con enfermedades infecciosas",
             "estado_nutricional": "Estado nutricional",
+            "hallazgo_examen_fisico": "Hallazgo relevante al examen fisico",
         }
         for field, col in field_to_col.items():
             if col in self.categorias_raras and field in grouped:
@@ -120,8 +124,15 @@ class MLService:
         return grouped
 
     def _build_dataframe(self, data: dict) -> pd.DataFrame:
-        """Construye DataFrame con nombres exactos de columnas."""
+        """Construye DataFrame con nombres exactos de columnas para el modelo V3.
+
+        El pipeline V3 incluye indicadores de missingness para albúmina y
+        globulina dentro de cols_num. Se generan antes de imputar.
+        """
         grouped = self._group_rare_categories(data)
+
+        albumina_val = grouped.get("albumina")
+        globulina_val = grouped.get("globulina")
 
         row = {
             "Grupo edad años": grouped["grupo_edad"],
@@ -133,53 +144,89 @@ class MLService:
             "Contacto epidemiologico con enfermedades infecciosas": grouped["contacto_epidemiologico"],
             "Exposicion ambiental": grouped["exposicion_ambiental"],
             "Estado nutricional": grouped["estado_nutricional"],
+            "Hallazgo relevante al examen fisico": grouped["hallazgo_examen_fisico"],
             "Glasgow": grouped["glasgow"],
-            "Nivel de Triage por el TEP": grouped["triage"],
             "Cayados absolutos": grouped.get("cayados"),
             "Plaquetas cel/mm3": grouped.get("plaquetas"),
-            "Albúmina sérica g/dl": grouped.get("albumina"),
-            "Globulina sérica g/dl": grouped.get("globulina"),
+            "Albúmina sérica g/dl": albumina_val,
+            "Globulina sérica g/dl": globulina_val,
+            "Procalcitonina ng/mL": grouped.get("procalcitonina"),
+            "Leucocitos cel/mm3": grouped.get("leucocitos"),
+            "Proteina C reactiva mg/Dl": grouped.get("pcr"),
+            # Indicadores de missingness (esperados por el pipeline V3)
+            "Albúmina_sérica_g_dl_missing": 1 if albumina_val is None else 0,
+            "Globulina_sérica_g_dl_missing": 1 if globulina_val is None else 0,
         }
 
-        df = pd.DataFrame([row], columns=self.features_originales)
+        # El DataFrame debe contener exactamente cols_num + cols_cat
+        # features_originales solo tiene las columnas clínicas base (18);
+        # creamos el DF con todas las columnas que el pipeline necesita.
+        all_cols = self.features_originales + [
+            "Albúmina_sérica_g_dl_missing",
+            "Globulina_sérica_g_dl_missing",
+        ]
+        # Evitar duplicados si ya están incluidos en features_originales
+        seen = set()
+        unique_cols = [c for c in all_cols if not (c in seen or seen.add(c))]
+
+        df = pd.DataFrame([row])
+        # Conservar solo columnas conocidas para no romper el pipeline
+        df = df[[c for c in unique_cols if c in df.columns]]
         return df
 
     def _apply_pipeline(self, df: pd.DataFrame) -> tuple:
         """
-        Aplica el pipeline paso a paso:
-        1. Impute numéricos
-        2. Impute categóricos
-        3. OHE categóricos
-        4. Scale numéricos
-        5. Concatenar
-        6. Predict
+        Aplica el pipeline paso a paso (compatible con modelo V3):
+        1. Separar indicadores de missingness de las columnas numéricas clínicas
+        2. Impute numéricos clínicos (imputer_num no incluye missingness flags)
+        3. Impute categóricos
+        4. OHE categóricos
+        5. Scale numéricos (cols_escalar)
+        6. Concatenar: [numéricos escalados | missingness flags | categóricos OHE]
+        7. Predict
         """
-        # Separar columnas
-        X_num = df[self.cols_num].copy()
+        # Columnas que el imputer_num conoce (sin missingness flags)
+        cols_imputer = list(self.imputer_num.feature_names_in_)
+
+        # Missingness flags — presentes en cols_num pero NO en el imputer
+        missing_flag_cols = [c for c in self.cols_num if c not in cols_imputer]
+
+        # Extraer valores de missingness antes de imputar
+        if missing_flag_cols:
+            X_missing_flags = df[missing_flag_cols].values
+        else:
+            X_missing_flags = None
+
+        # Separar columnas para imputer y OHE
+        X_num = df[cols_imputer].copy()
         X_cat = df[self.cols_cat].copy()
 
-        # 1. Imputar
+        # 1. Imputar numéricos
         X_num_imputed = pd.DataFrame(
             self.imputer_num.transform(X_num),
-            columns=self.cols_num,
+            columns=cols_imputer,
         )
+        # 2. Imputar categóricos
         X_cat_imputed = pd.DataFrame(
             self.imputer_cat.transform(X_cat),
             columns=self.cols_cat,
         )
 
-        # 2. OHE categóricos
+        # 3. OHE categóricos
         X_cat_ohe = self.ohe.transform(X_cat_imputed)
         if hasattr(X_cat_ohe, "toarray"):
             X_cat_ohe = X_cat_ohe.toarray()
 
-        # 3. Escalar numéricos
+        # 4. Escalar numéricos (sólo cols_escalar, sin flags)
         X_num_scaled = self.scaler.transform(X_num_imputed[self.cols_escalar])
 
-        # 4. Concatenar: numéricos escalados + categóricos OHE
-        X_final = np.hstack([X_num_scaled, X_cat_ohe])
+        # 5. Concatenar respetando el orden de feature_names_post_ohe
+        if X_missing_flags is not None:
+            X_final = np.hstack([X_num_scaled, X_missing_flags, X_cat_ohe])
+        else:
+            X_final = np.hstack([X_num_scaled, X_cat_ohe])
 
-        # 5. Predecir
+        # 6. Predecir
         prediction = self.modelo.predict(X_final)[0]
         probabilities = self.modelo.predict_proba(X_final)[0]
 
@@ -212,9 +259,25 @@ class MLService:
         if globulina is not None and globulina > 4.0:
             factors.append(f"Globulina elevada ({globulina} g/dl)")
 
-        triage = data.get("triage", "")
-        if triage in ("Nivel I", "Nivel II"):
-            factors.append(f"Triage alto ({triage})")
+        # Nuevos factores V3
+        procalcitonina = data.get("procalcitonina")
+        if procalcitonina is not None and procalcitonina > 0.5:
+            factors.append(f"Procalcitonina elevada ({procalcitonina} ng/mL)")
+
+        leucocitos = data.get("leucocitos")
+        if leucocitos is not None:
+            if leucocitos < 4000:
+                factors.append(f"Leucopenia ({leucocitos:,.0f} cel/mm³)")
+            elif leucocitos > 15000:
+                factors.append(f"Leucocitosis ({leucocitos:,.0f} cel/mm³)")
+
+        pcr = data.get("pcr")
+        if pcr is not None and pcr > 10:
+            factors.append(f"PCR elevada ({pcr} mg/dL)")
+
+        hallazgo = data.get("hallazgo_examen_fisico", "Ninguno")
+        if hallazgo and hallazgo not in ("Ninguno", ""):
+            factors.append(f"Hallazgo al examen físico: {hallazgo}")
 
         tiempo = data.get("tiempo_fiebre", 0)
         if tiempo > 5:

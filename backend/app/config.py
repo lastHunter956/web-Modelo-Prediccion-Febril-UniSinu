@@ -14,9 +14,9 @@ class Settings(BaseSettings):
     allowed_origins: str = "http://localhost:3000"
 
     # Artifacts paths
-    pipeline_path: str = "./artifacts/pipeline_completo_v2c.pkl"
-    metadata_path: str = "./artifacts/metadata_v2c.json"
-    features_path: str = "./artifacts/feature_names_v2c.json"
+    pipeline_path: str = "./artifacts/pipeline_completo_v3.pkl"
+    metadata_path: str = "./artifacts/metadata_v3.json"
+    features_path: str = "./artifacts/feature_names_v3.json"
 
     # Rate limiting
     rate_limit: str = "30/minute"

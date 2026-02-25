@@ -4,7 +4,7 @@ from typing import Optional
 
 
 class PatientInput(BaseModel):
-    """15 variables clínicas de entrada del modelo V2."""
+    """18 variables clínicas de entrada del modelo V3."""
 
     # Categóricas (9)
     grupo_edad: str = Field(
@@ -25,12 +25,16 @@ class PatientInput(BaseModel):
         ..., description="Exposición ambiental"
     )
     estado_nutricional: str = Field(..., description="Estado nutricional")
-    triage: str = Field(
+    hallazgo_examen_fisico: str = Field(
         ...,
-        description="Nivel de Triage por el TEP: 'Nivel I' a 'Nivel IV'",
+        description=(
+            "Hallazgo relevante al examen físico: 'Ninguno', 'Eritema orofaríngeo', "
+            "'Exudado purulento retrofaríngeo', 'Hipertrofia de amigdalas con placas purulentas', "
+            "'Signos inflamatorios membrana timpánica', 'Taquipnea', 'Tirajes subcostales', 'Otro'"
+        ),
     )
 
-    # Numéricas (6)
+    # Numéricas (9)
     tiempo_fiebre: int = Field(
         ..., ge=0, le=60, description="Días desde inicio de fiebre"
     )
@@ -46,6 +50,15 @@ class PatientInput(BaseModel):
     )
     globulina: Optional[float] = Field(
         None, ge=0, description="Globulina sérica g/dl"
+    )
+    procalcitonina: Optional[float] = Field(
+        None, ge=0, description="Procalcitonina ng/mL"
+    )
+    leucocitos: Optional[float] = Field(
+        None, ge=0, description="Leucocitos cel/mm³"
+    )
+    pcr: Optional[float] = Field(
+        None, ge=0, description="Proteína C reactiva mg/dL"
     )
 
 
