@@ -57,12 +57,12 @@ function LoginForm() {
                     </p>
                     <div className="login-hero-stats">
                         <div className="login-stat">
-                            <div className="value">91.95%</div>
-                            <div className="label">Precisión</div>
+                            <div className="value">74.6%</div>
+                            <div className="label">Accuracy CV</div>
                         </div>
                         <div className="login-stat">
-                            <div className="value">92.56%</div>
-                            <div className="label">Confiabilidad</div>
+                            <div className="value">70%</div>
+                            <div className="label">Recall Severa</div>
                         </div>
                         <div className="login-stat">
                             <div className="value">0</div>

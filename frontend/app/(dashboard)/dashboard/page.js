@@ -290,18 +290,18 @@ export default function DashboardPage() {
         <div className="card dash-card-animate" style={{ animationDelay: '0.06s' }}>
           <div className="card-header">
             <h3><IconTrendingUp style={{ width: '1em', height: '1em', verticalAlign: 'middle', marginRight: 6 }} /> Modelo ML</h3>
-            <span className="dash-version-tag">v2c</span>
+            <span className="dash-version-tag">V3</span>
           </div>
           <div className="dash-model-metrics">
             <div className="dash-metric-item">
-              <div className="dash-metric-ring" style={{ '--pct': '91.95', '--clr': 'var(--severity-low)' }}>
-                <span>91.9%</span>
+              <div className="dash-metric-ring" style={{ '--pct': '74.57', '--clr': 'var(--severity-low)' }}>
+                <span>74.6%</span>
               </div>
-              <span className="dash-metric-label">Accuracy</span>
+              <span className="dash-metric-label">Accuracy CV</span>
             </div>
             <div className="dash-metric-item">
-              <div className="dash-metric-ring" style={{ '--pct': '92.56', '--clr': 'var(--accent)' }}>
-                <span>92.6%</span>
+              <div className="dash-metric-ring" style={{ '--pct': '69.47', '--clr': 'var(--accent)' }}>
+                <span>69.5%</span>
               </div>
               <span className="dash-metric-label">F1-Macro</span>
             </div>
@@ -362,7 +362,7 @@ export default function DashboardPage() {
                   <tr>
                     <th>Fecha</th>
                     <th>Paciente</th>
-                    <th>Triage</th>
+                    <th>Hallazgo Físico</th>
                     <th>Severidad</th>
                     <th>Confianza</th>
                     <th>Factores Clave</th>
@@ -399,7 +399,7 @@ export default function DashboardPage() {
                             </div>
                           </div>
                         </td>
-                        <td><span className="badge badge-info">{datos.triage || '—'}</span></td>
+                        <td><span className="badge badge-info" style={{ maxWidth: 140, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'inline-block' }}>{datos.hallazgo_examen_fisico || '—'}</span></td>
                         <td><SeverityBadge prediccion={e.prediccion} /></td>
                         <td>
                           <div className="dash-confidence-cell">
@@ -455,8 +455,8 @@ export default function DashboardPage() {
                         <span className="dash-eval-field-val">{datos.sexo || '—'}</span>
                       </div>
                       <div className="dash-eval-field">
-                        <span className="dash-eval-field-label">Triage</span>
-                        <span className="dash-eval-field-val">{datos.triage || '—'}</span>
+                        <span className="dash-eval-field-label">Hallazgo Físico</span>
+                        <span className="dash-eval-field-val" style={{ fontSize: '0.75rem' }}>{datos.hallazgo_examen_fisico || '—'}</span>
                       </div>
                       <div className="dash-eval-field">
                         <span className="dash-eval-field-label">Confianza</span>

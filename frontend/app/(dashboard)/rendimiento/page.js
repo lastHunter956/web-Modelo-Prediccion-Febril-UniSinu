@@ -66,8 +66,8 @@ export default function RendimientoPage() {
           <div className="kpi-icon" style={{ background: 'rgba(99,102,241,0.12)', color: '#818CF8' }}>
             <IconPerformance />
           </div>
-          <div className="kpi-value">91.95%</div>
-          <div className="kpi-label">Precisión General</div>
+          <div className="kpi-value">74.6%</div>
+          <div className="kpi-label">Accuracy (CV) V3</div>
         </div>
         <div className="kpi-card">
           <div className="kpi-icon" style={{ background: 'rgba(99,102,241,0.12)', color: '#818CF8' }}>
