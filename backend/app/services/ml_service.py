@@ -289,7 +289,7 @@ class MLService:
 
         estado_nut = data.get("estado_nutricional", "")
         if estado_nut == "Riesgo de desnutrición":
-            factors.append("Riesgo de desnutrición")
+            factors.append("Desnutrición")
 
         if not factors:
             factors.append("Parámetros clínicos dentro de rangos esperados")

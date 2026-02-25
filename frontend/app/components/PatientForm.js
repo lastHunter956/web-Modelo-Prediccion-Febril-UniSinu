@@ -48,7 +48,7 @@ const OPTIONS = {
     ],
     estado_nutricional: [
         { value: 'Normal', label: 'Normal' },
-        { value: 'Riesgo de desnutrición', label: 'Riesgo de desnutrición' },
+        { value: 'Riesgo de desnutrición', label: 'Desnutrición' },
         { value: 'Otro', label: 'Otro (Obesidad)' },
     ],
     hallazgo_examen_fisico: [
