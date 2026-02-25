@@ -2,7 +2,7 @@
 import { useState, useEffect, useMemo, Fragment } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { getEvaluaciones } from '../../lib/api';
-import { IconSearch, IconHistory, IconEvaluation, IconChevronLeft, IconChevronRight, IconEdit } from '../../components/Icons';
+import { IconSearch, IconHistory, IconChevronLeft, IconChevronRight, IconEdit, IconChevronDown } from '../../components/Icons';
 
 function getBadgeClass(severity) {
   if (severity === 'Leve') return 'badge badge-low';
@@ -11,6 +11,43 @@ function getBadgeClass(severity) {
 }
 
 const ITEMS_PER_PAGE = 8;
+
+/** Muestra un campo con label y valor. Retorna null si no hay valor. */
+function Field({ label, value, color, fullWidth }) {
+  if (value === null || value === undefined || value === '' || value === '—') return null;
+  return (
+    <div style={{ gridColumn: fullWidth ? '1 / -1' : undefined }}>
+      <span style={{ color: 'var(--text-muted)', display: 'block', fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 3 }}>
+        {label}
+      </span>
+      <strong style={{ color: color || 'var(--text-primary)', fontSize: '0.88rem' }}>
+        {value}
+      </strong>
+    </div>
+  );
+}
+
+/** Sección con título y campos en grid. */
+function Section({ title, children, color }) {
+  const validChildren = Array.isArray(children)
+    ? children.filter(Boolean)
+    : children ? [children] : [];
+  if (validChildren.length === 0) return null;
+  return (
+    <div style={{ marginBottom: '1rem' }}>
+      <div style={{
+        fontSize: '0.68rem', fontWeight: 700, textTransform: 'uppercase',
+        letterSpacing: '0.08em', color: color || 'var(--accent)',
+        marginBottom: '0.6rem', borderBottom: '1px solid var(--border)', paddingBottom: '0.25rem'
+      }}>
+        {title}
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '0.75rem' }}>
+        {validChildren}
+      </div>
+    </div>
+  );
+}
 
 export default function HistorialPage() {
   const { supabase } = useAuth();
@@ -22,16 +59,13 @@ export default function HistorialPage() {
   const [expandedRow, setExpandedRow] = useState(null);
   const [observaciones, setObservaciones] = useState({});
 
-  useEffect(() => {
-    loadEvaluaciones();
-  }, []);
+  useEffect(() => { loadEvaluaciones(); }, []);
 
   async function loadEvaluaciones() {
     setLoading(true);
     try {
       const { data } = await getEvaluaciones(supabase, { limit: 200 });
       setEvaluaciones(data || []);
-      // Load mocked observations from local storage if any
       const savedObs = localStorage.getItem('clinical_observations');
       if (savedObs) setObservaciones(JSON.parse(savedObs));
     } catch (err) {
@@ -41,10 +75,10 @@ export default function HistorialPage() {
     }
   }
 
-  const handleEditObservation = (e, id) => {
-    e.stopPropagation();
+  const handleEditObservation = (ev, id) => {
+    ev.stopPropagation();
     const current = observaciones[id] || '';
-    const newVal = prompt('Observación clínica (ej: "Diagnóstico confirmado"):', current);
+    const newVal = prompt('Observación clínica:', current);
     if (newVal !== null) {
       const newObs = { ...observaciones, [id]: newVal };
       setObservaciones(newObs);
@@ -60,18 +94,17 @@ export default function HistorialPage() {
         !q ||
         e.prediccion?.toLowerCase().includes(q) ||
         datos.grupo_edad?.toLowerCase().includes(q) ||
-        datos.triage?.toLowerCase().includes(q);
-      const matchesSeverity =
-        filterSeverity === 'Todas' || e.prediccion === filterSeverity;
+        datos.sexo?.toLowerCase().includes(q) ||
+        datos.area?.toLowerCase().includes(q) ||
+        datos.estado_nutricional?.toLowerCase().includes(q) ||
+        datos.hallazgo_examen_fisico?.toLowerCase().includes(q);
+      const matchesSeverity = filterSeverity === 'Todas' || e.prediccion === filterSeverity;
       return matchesSearch && matchesSeverity;
     });
   }, [evaluaciones, search, filterSeverity]);
 
   const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
-  const paginated = filtered.slice(
-    (page - 1) * ITEMS_PER_PAGE,
-    page * ITEMS_PER_PAGE
-  );
+  const paginated = filtered.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE);
 
   const stats = useMemo(() => ({
     total: evaluaciones.length,
@@ -80,24 +113,85 @@ export default function HistorialPage() {
     severa: evaluaciones.filter((e) => e.prediccion_codigo === 2).length,
   }), [evaluaciones]);
 
-  const handlePageChange = (p) => {
-    setPage(p);
-    setExpandedRow(null);
-  };
+  const handlePageChange = (p) => { setPage(p); setExpandedRow(null); };
 
-  const formatDate = (dateStr) => {
-    return new Date(dateStr).toLocaleDateString('es-CO', {
+  const formatDate = (dateStr) =>
+    new Date(dateStr).toLocaleDateString('es-CO', {
       year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit',
     });
-  };
+
+  /** Panel expandido con toda la información V3 */
+  function DetailPanel({ datos, probs, factores }) {
+    const d = datos || {};
+    const p = probs || {};
+    return (
+      <div style={{ padding: '1.25rem 1.5rem', background: 'var(--bg-secondary)', borderLeft: '4px solid var(--accent)' }}>
+
+        {/* Probabilidades */}
+        <Section title="Probabilidades de Severidad">
+          <Field label="Leve" value={p.leve != null ? `${p.leve}%` : null} color="var(--severity-low)" />
+          <Field label="Moderada" value={p.moderada != null ? `${p.moderada}%` : null} color="var(--severity-mid)" />
+          <Field label="Severa" value={p.severa != null ? `${p.severa}%` : null} color="var(--severity-high)" />
+        </Section>
+
+        {/* Datos generales */}
+        <Section title="Datos Generales" color="var(--text-muted)">
+          <Field label="Sexo" value={d.sexo} />
+          <Field label="Área" value={d.area} />
+          <Field label="Días de Fiebre" value={d.tiempo_fiebre != null ? `${d.tiempo_fiebre} días` : null} />
+          <Field label="Vacunación" value={d.vacunacion} />
+        </Section>
+
+        {/* Evaluación clínica */}
+        <Section title="Evaluación Clínica" color="#60a5fa">
+          <Field label="Estado Nutricional" value={d.estado_nutricional === 'Riesgo de desnutrición' ? 'Desnutrición' : d.estado_nutricional} />
+          <Field label="Glasgow" value={d.glasgow != null ? d.glasgow : null} />
+          <Field label="Hallazgo Examen Físico" value={d.hallazgo_examen_fisico} fullWidth={true} />
+          <Field label="Antecedentes" value={d.antecedentes_personales} fullWidth={true} />
+          <Field label="Contacto Epidemiológico" value={d.contacto_epidemiologico} fullWidth={true} />
+          <Field label="Exposición Ambiental" value={d.exposicion_ambiental} />
+        </Section>
+
+        {/* Laboratorios */}
+        <Section title="Laboratorios" color="#34d399">
+          <Field label="Procalcitonina (ng/mL)" value={d.procalcitonina != null ? d.procalcitonina : null} />
+          <Field label="Leucocitos (cel/mm³)" value={d.leucocitos != null ? d.leucocitos.toLocaleString() : null} />
+          <Field label="PCR (mg/dL)" value={d.pcr != null ? d.pcr : null} />
+          <Field label="Plaquetas (cel/mm³)" value={d.plaquetas != null ? d.plaquetas.toLocaleString() : null} />
+          <Field label="Albúmina (g/dl)" value={d.albumina != null ? d.albumina : null} />
+          <Field label="Globulina (g/dl)" value={d.globulina != null ? d.globulina : null} />
+          <Field label="Cayados Absolutos" value={d.cayados_absolutos != null ? d.cayados_absolutos : null} />
+        </Section>
+
+        {/* Factores Contribuyentes */}
+        {factores && factores.length > 0 && (
+          <div>
+            <div style={{
+              fontSize: '0.68rem', fontWeight: 700, textTransform: 'uppercase',
+              letterSpacing: '0.08em', color: 'var(--severity-high)',
+              marginBottom: '0.6rem', borderBottom: '1px solid var(--border)', paddingBottom: '0.25rem'
+            }}>
+              Factores Contribuyentes
+            </div>
+            <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+              {factores.map((f, i) => (
+                <li key={i} style={{ fontSize: '0.82rem', color: 'var(--text-primary)', display: 'flex', gap: '0.5rem', alignItems: 'flex-start' }}>
+                  <span style={{ color: 'var(--accent)', marginTop: 2 }}>›</span>
+                  {f}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="page-container">
       <div className="page-header">
-        <h1>
-          Historial de <span className="text-gradient">Evaluaciones</span>
-        </h1>
-        <p>Registro de evaluaciones y seguimiento clínico</p>
+        <h1>Historial de <span className="text-gradient">Evaluaciones</span></h1>
+        <p>Registro completo de evaluaciones y seguimiento clínico</p>
       </div>
 
       {/* Summary stats */}
@@ -128,7 +222,7 @@ export default function HistorialPage() {
             <input
               className="input"
               type="text"
-              placeholder="Buscar por severidad, edad..."
+              placeholder="Buscar por severidad, edad, sexo, área..."
               value={search}
               onChange={(e) => { setSearch(e.target.value); setPage(1); }}
               style={{ paddingLeft: '2.5rem' }}
@@ -157,17 +251,18 @@ export default function HistorialPage() {
           </div>
         ) : (
           <>
-            {/* Desktop Table */}
+            {/* ── Desktop Table ────────────────────────────── */}
             <div className="table-container desktop-only">
               <table className="table">
                 <thead>
                   <tr>
                     <th>Fecha</th>
                     <th>Grupo Edad</th>
-                    <th>Triage</th>
+                    <th>Sexo</th>
                     <th>Severidad</th>
                     <th>Confianza</th>
                     <th>Observación</th>
+                    <th style={{ width: 32 }}></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -183,14 +278,14 @@ export default function HistorialPage() {
                           style={{
                             cursor: 'pointer',
                             background: isExpanded ? 'rgba(255,255,255,0.03)' : 'transparent',
-                            transition: 'background 0.2s ease'
+                            transition: 'background 0.2s ease',
                           }}
                         >
                           <td style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '0.8rem' }}>
                             {formatDate(e.created_at)}
                           </td>
                           <td>{datos.grupo_edad || '—'}</td>
-                          <td><span className="badge badge-info">{datos.triage || '—'}</span></td>
+                          <td>{datos.sexo || '—'}</td>
                           <td><span className={getBadgeClass(e.prediccion)}>{e.prediccion}</span></td>
                           <td>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -217,20 +312,19 @@ export default function HistorialPage() {
                               <IconEdit style={{ width: 14, height: 14, opacity: 0.5 }} />
                             </div>
                           </td>
+                          <td>
+                            <IconChevronDown style={{
+                              width: 16, height: 16, color: 'var(--text-muted)',
+                              transform: isExpanded ? 'rotate(180deg)' : 'none',
+                              transition: 'transform 0.2s ease',
+                            }} />
+                          </td>
                         </tr>
 
                         {isExpanded && (
-                          <tr className="expanded-row-desktop">
-                            <td colSpan={6} style={{ padding: 0, borderBottom: '1px solid var(--border)' }}>
-                              <div style={{ background: 'rgba(0,0,0,0.2)', padding: '1rem 1.5rem', borderLeft: '4px solid var(--accent)' }}>
-                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '1rem', fontSize: '0.85rem' }}>
-                                  <div><span style={{ color: 'var(--text-muted)', display: 'block', fontSize: '0.75rem', marginBottom: '2px' }}>Sexo</span> <strong style={{ color: 'var(--text-primary)' }}>{datos.sexo || '—'}</strong></div>
-                                  <div><span style={{ color: 'var(--text-muted)', display: 'block', fontSize: '0.75rem', marginBottom: '2px' }}>Área</span> <strong style={{ color: 'var(--text-primary)' }}>{datos.area || '—'}</strong></div>
-                                  <div><span style={{ color: 'var(--text-muted)', display: 'block', fontSize: '0.75rem', marginBottom: '2px' }}>Días de fiebre</span> <strong style={{ color: 'var(--text-primary)' }}>{datos.tiempo_fiebre ?? '—'}</strong></div>
-                                  <div><span style={{ color: 'var(--text-muted)', display: 'block', fontSize: '0.75rem', marginBottom: '2px' }}>Probabilidad (Leve)</span> <strong style={{ color: 'var(--severity-low)' }}>{probs.leve != null ? `${probs.leve}%` : '—'}</strong></div>
-                                  <div><span style={{ color: 'var(--text-muted)', display: 'block', fontSize: '0.75rem', marginBottom: '2px' }}>Probabilidad (Severa)</span> <strong style={{ color: 'var(--severity-high)' }}>{probs.severa != null ? `${probs.severa}%` : '—'}</strong></div>
-                                </div>
-                              </div>
+                          <tr>
+                            <td colSpan={7} style={{ padding: 0, borderBottom: '2px solid var(--accent)' }}>
+                              <DetailPanel datos={datos} probs={probs} factores={e.factores} />
                             </td>
                           </tr>
                         )}
@@ -241,66 +335,88 @@ export default function HistorialPage() {
               </table>
             </div>
 
-            {/* Mobile Cards */}
+            {/* ── Mobile Cards ────────────────────────────── */}
             <div className="eval-cards mobile-only">
               {paginated.map((e) => {
                 const datos = e.datos_paciente || {};
                 const isExpanded = expandedRow === e.id;
-                const severityColor = e.prediccion === 'Leve' ? 'var(--severity-low)' :
-                  e.prediccion === 'Moderada' ? 'var(--severity-mid)' :
-                    'var(--severity-high)';
+                const probs = e.probabilidades || {};
+                const severityColor =
+                  e.prediccion === 'Leve' ? 'var(--severity-low)' :
+                    e.prediccion === 'Moderada' ? 'var(--severity-mid)' :
+                      'var(--severity-high)';
+
                 return (
-                  <div key={e.id} className="eval-card-mini" onClick={() => setExpandedRow(isExpanded ? null : e.id)} style={{ borderLeft: `4px solid ${severityColor}` }}>
-                    <div className="eval-card-header">
-                      <div style={{ display: 'flex', flexDirection: 'column' }}>
-                        <span className={getBadgeClass(e.prediccion)}>{e.prediccion}</span>
-                        <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: 4 }}>{formatDate(e.created_at)}</span>
-                      </div>
-                      <div className="text-right">
-                        <span style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-primary)' }}>{e.confianza}%</span>
-                        <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>CONF</div>
-                      </div>
-                    </div>
-
-                    <div className="eval-card-body" style={{ flexDirection: 'column', gap: 8, alignItems: 'stretch' }}>
-                      <div className="eval-card-row">
-                        <span className="eval-card-label">Edad:</span>
-                        <span className="eval-card-val">{datos.grupo_edad || '—'}</span>
-                      </div>
-                      <div className="eval-card-row">
-                        <span className="eval-card-label">Triage:</span>
-                        <span className="badge badge-info">{datos.triage || '—'}</span>
-                      </div>
-
-                      <div className="eval-card-row" onClick={(x) => handleEditObservation(x, e.id)}>
-                        <span className="eval-card-label">Obs:</span>
-                        <span className="eval-card-val" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                          {observaciones[e.id] || '—'}
-                          <IconEdit style={{ width: 14, height: 14 }} />
-                        </span>
-                      </div>
-
-                      {isExpanded && (
-                        <div style={{ marginTop: '0.75rem', paddingTop: '0.75rem', borderTop: '1px solid var(--border)', fontSize: '0.8rem', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-                          <div className="eval-card-field">
-                            <span className="eval-card-label">Días fiebre</span>
-                            <span className="eval-card-val">{datos.tiempo_fiebre ?? '—'}</span>
-                          </div>
-                          <div className="eval-card-field">
-                            <span className="eval-card-label">Sexo</span>
-                            <span className="eval-card-val">{datos.sexo || '—'}</span>
-                          </div>
-                          <div className="eval-card-field">
-                            <span className="eval-card-label">Área</span>
-                            <span className="eval-card-val">{datos.area || '—'}</span>
-                          </div>
-                          <div className="eval-card-field">
-                            <span className="eval-card-label">P(Severa)</span>
-                            <span className="eval-card-val" style={{ color: 'var(--severity-high)' }}>{e.probabilidades?.severa ? e.probabilidades.severa + '%' : '—'}</span>
+                  <div
+                    key={e.id}
+                    className="eval-card-mini"
+                    style={{ borderLeft: `4px solid ${severityColor}`, overflow: 'hidden' }}
+                  >
+                    {/* Header — clic expande */}
+                    <div
+                      onClick={() => setExpandedRow(isExpanded ? null : e.id)}
+                      style={{ cursor: 'pointer', padding: '0.85rem 1rem' }}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                        <div>
+                          <span className={getBadgeClass(e.prediccion)}>{e.prediccion}</span>
+                          <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: 4 }}>
+                            {formatDate(e.created_at)}
                           </div>
                         </div>
-                      )}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <div style={{ textAlign: 'right' }}>
+                            <span style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                              {e.confianza}%
+                            </span>
+                            <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>CONF</div>
+                          </div>
+                          <IconChevronDown style={{
+                            width: 16, height: 16, color: 'var(--text-muted)', flexShrink: 0,
+                            transform: isExpanded ? 'rotate(180deg)' : 'none',
+                            transition: 'transform 0.2s ease',
+                          }} />
+                        </div>
+                      </div>
+
+                      {/* Siempre visible: resumen básico */}
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', marginTop: '0.75rem', fontSize: '0.82rem' }}>
+                        <div>
+                          <span style={{ color: 'var(--text-muted)', fontSize: '0.68rem', textTransform: 'uppercase' }}>Edad</span>
+                          <div style={{ fontWeight: 600 }}>{datos.grupo_edad || '—'}</div>
+                        </div>
+                        <div>
+                          <span style={{ color: 'var(--text-muted)', fontSize: '0.68rem', textTransform: 'uppercase' }}>Sexo</span>
+                          <div style={{ fontWeight: 600 }}>{datos.sexo || '—'}</div>
+                        </div>
+                        <div>
+                          <span style={{ color: 'var(--text-muted)', fontSize: '0.68rem', textTransform: 'uppercase' }}>Área</span>
+                          <div style={{ fontWeight: 600 }}>{datos.area || '—'}</div>
+                        </div>
+                        <div>
+                          <span style={{ color: 'var(--text-muted)', fontSize: '0.68rem', textTransform: 'uppercase' }}>Días Fiebre</span>
+                          <div style={{ fontWeight: 600 }}>{datos.tiempo_fiebre != null ? `${datos.tiempo_fiebre}d` : '—'}</div>
+                        </div>
+                      </div>
                     </div>
+
+                    {/* Expandido: toda la información */}
+                    {isExpanded && (
+                      <div style={{ borderTop: '1px solid var(--border)' }}>
+                        <DetailPanel datos={datos} probs={probs} factores={e.factores} />
+
+                        {/* Observación editable */}
+                        <div
+                          style={{ padding: '0.75rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', borderTop: '1px solid var(--border)', cursor: 'pointer' }}
+                          onClick={(x) => handleEditObservation(x, e.id)}
+                        >
+                          <IconEdit style={{ width: 14, height: 14, color: 'var(--accent)' }} />
+                          <span style={{ fontSize: '0.8rem', color: observaciones[e.id] ? 'var(--text-primary)' : 'var(--text-muted)' }}>
+                            {observaciones[e.id] || 'Añadir observación clínica...'}
+                          </span>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 );
               })}
@@ -312,7 +428,7 @@ export default function HistorialPage() {
                   <IconHistory style={{ width: 48, height: 48 }} />
                 </div>
                 <h3>Sin resultados</h3>
-                <p>No se encontraron evaluaciones.</p>
+                <p>No se encontraron evaluaciones con los filtros actuales.</p>
               </div>
             )}
           </>
